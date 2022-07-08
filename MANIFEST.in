@@ -1,0 +1,7 @@
+include LICENSE AUTHORS.rst CHANGES.rst README.rst
+recursive-include source *
+recursive-include manatus/tests *
+recursive-exclude docs *
+recursive-exclude manatus/tests/__pychache__ *
+prune source
+prune build

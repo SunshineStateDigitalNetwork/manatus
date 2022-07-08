@@ -1,0 +1,5 @@
+Sickle>=0.7.0
+lxml~=4.9.0
+requests~=2.27.1
+pymods>=2.0.9
+setuptools~=57.0.0
