@@ -25,7 +25,7 @@ author = 'Matthew Miguez'
 
 # The full version, including alpha/beta/rc tags
 # release = __version__
-release = '0.0.1'
+release = '1.0.0'
 
 # -- General configuration ---------------------------------------------------
 
@@ -57,7 +57,7 @@ exclude_patterns = []
 #
 html_theme = 'sphinx_rtd_theme'
 
-#html_logo = 'manatus_logo.png'
+html_logo = 'manatus_logo.png'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
