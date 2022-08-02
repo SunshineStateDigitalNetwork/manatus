@@ -158,11 +158,13 @@ if __name__ == '__main__':
         if args.run:
             for section in harvest_parser.sections():
                 cli.harvest(harvest_parser[section], section, write_path, verbosity=verbosity)
+                sys.exit(0)
 
         # Run harvest selectively by config key
         if args.select:
             try:
                 cli.harvest(harvest_parser[args.select], args.select, write_path, verbosity=verbosity)
+                sys.exit(0)
             except KeyError:
                 print(f'The supplied organization key was not found in the config file.\nSupplied key: {args.select}')
                 sys.exit(1)
@@ -199,6 +201,7 @@ if __name__ == '__main__':
                 try:
                     cli.transform(manatus_config, scenario_parser[section], section, profile, verbosity=verbosity,
                                   to_console=to_console)
+                    sys.exit(0)
                 except FileNotFoundError:
                     logger.warning(f"No data found for {section}")
                     continue
@@ -208,6 +211,7 @@ if __name__ == '__main__':
             try:
                 cli.transform(manatus_config, scenario_parser[args.select], args.select, profile, verbosity=verbosity,
                               to_console=to_console)
+                sys.exit(0)
             except KeyError:
                 print(f'The supplied organization key was not found in the config file.\nSupplied key: {args.select}')
                 sys.exit(1)
@@ -225,3 +229,5 @@ if __name__ == '__main__':
         if args.interactive:
             cli.interactive_run(manatus_config, scenario_parser, 'transform', profile, verbosity=verbosity,
                                 to_console=to_console)
+
+    sys.exit(0)
