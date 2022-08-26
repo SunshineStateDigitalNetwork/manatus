@@ -42,7 +42,7 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
     # check for dir path
     if not os.path.exists(os.path.join(write_path, org_key)):
         logger.debug(f'Creating path {os.path.join(write_path, org_key)}')
-        os.makedirs(os.path.join(write_path, org_key), mode=774)
+        os.makedirs(os.path.join(write_path, org_key), mode=0o774)
 
     # OAI-PMH endpoint URL from config
     oai = org_harvest_info['OAIEndpoint']
