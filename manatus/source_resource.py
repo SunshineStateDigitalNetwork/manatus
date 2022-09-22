@@ -223,7 +223,7 @@ class RecordGroup(object):
 
     def print(self, indent=None):
         for rec in self.records:
-            print(json.dumps(rec.data, indent=indent, cls=DPLARecordEncoder))
+            print(json.dumps(rec, indent=indent, cls=DPLARecordEncoder))
 
 
 class DPLARecordEncoder(JSONEncoder):
