@@ -87,7 +87,7 @@ if __name__ == '__main__':
             logger.error(f"Profile: {profile} is not listed in {os.path.join(CONFIG_PATH, 'manatus.cfg')}")
             raise manatus.exceptions.ManatusPofileError(profile, os.path.join(CONFIG_PATH, 'manatus.cfg'))
 
-    # Set up logging
+    ## Logging
 
     # TODO: configing arbitrary handlers and filters
 
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     log_fh = logging.FileHandler(os.path.join(LOG_PATH, 'manatus.log'))
     formatter = logging.Formatter('%(name)s: %(asctime)s: %(levelname)s: %(message)s', datefmt='%Y-%m-%d, %I:%M')
     log_fh.setFormatter(formatter)
-    log_fh.setLevel(logging.DEBUG)
+    log_fh.setLevel(logging.INFO)
 
     # TSV handler
     tsv_fh = logging.FileHandler(os.path.join(LOG_PATH, 'manatus_errors.tsv'))
@@ -115,11 +115,19 @@ if __name__ == '__main__':
     tsv_fh.setFormatter(tsv_formatter)
     tsv_fh.setLevel(logging.WARNING)
 
+    # Console logger
+    if verbosity > 1:
+        ch = logging.StreamHandler()
+        console_formatter = logging.Formatter('%(levelname)s: %(name)s: (%(asctime)s)\t%(message)s', datefmt='%Y-%m-%d, %I:%M')
+        ch.setFormatter(console_formatter)
+        ch.setLevel(logging.DEBUG)
+        app_logger.addHandler(ch)
+
     app_logger.setLevel(LOG_LEVEL.upper())
     app_logger.addHandler(log_fh)
     app_logger.addHandler(tsv_fh)
 
-    logger.debug(f'manatus.app called with args {args}')
+    logger.info(f'manatus.app called with args {args}')
     logger.info(f'Using profile: {profile}')
 
     # Application and module self-test

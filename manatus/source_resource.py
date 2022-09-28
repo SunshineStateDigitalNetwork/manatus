@@ -212,7 +212,7 @@ class RecordGroup(object):
         :return:
         """
         if not exists(fp):
-            os.mkdir(fp)
+            os.mkdir(fp, mode=0o774)
         if prefix:
             f = f'{prefix}-{date.today()}'
         else:

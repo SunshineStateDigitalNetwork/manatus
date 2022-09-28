@@ -11,13 +11,13 @@ logger.addHandler(logging.NullHandler())
 
 def build(custom_map_function, data, org, provider):
     """apply transformation map to data iterable"""
-    logger.debug('cli.build called')
+    logger.info('cli.build called')
     records = manatus.RecordGroup()
 
-    logger.debug(f'Mapping data with {custom_map_function}')
+    logger.info(f'Mapping data with {custom_map_function}')
     mapped_data = map(custom_map_function, data)
 
-    logger.debug(f'Mapped data with {custom_map_function}')
+    logger.info(f'Mapped data with {custom_map_function}')
     for mapped_rec in mapped_data:
         # map generators can return None if record is marked to be skipped or errors
         if mapped_rec:
@@ -40,7 +40,7 @@ def build(custom_map_function, data, org, provider):
                 dpla.preview = tn
                 dpla.sourceResource = sr.data
 
-                logger.debug(f"Built record {sr.data['identifier']}")
+                logger.info(f"Built record {sr.data['identifier']}")
                 records.append(dpla.data)
 
         else:
@@ -63,7 +63,7 @@ def transform(manatus_config, org_transformation_info, org_key, profile, verbosi
     :param bool to_console: If set to ``True``, transformed data is written to the console rather than the file system.
 
     """
-    logger.debug('cli.transform called')
+    logger.info('cli.transform called')
     IN_PATH = os.path.abspath(manatus_config[profile]['InFilePath'])
     OUT_PATH = os.path.abspath(manatus_config[profile]['OutFilePath'])
     prefix = manatus_config[profile]['OutFilePrefix']
@@ -96,7 +96,7 @@ def transform(manatus_config, org_transformation_info, org_key, profile, verbosi
     o.scenario = getattr(manatus, org_transformation_info['Scenario'])
     # use config map value to search for callable module & function with that name
     try:
-        logger.debug(f'Trying to find custom map module {o.map}')
+        logger.info(f'Trying to find custom map module {o.map}')
         custom_map_module = __import__(o.map)
         custom_map_function = getattr(custom_map_module, o.map)
     except ModuleNotFoundError:
@@ -110,33 +110,29 @@ def transform(manatus_config, org_transformation_info, org_key, profile, verbosi
         for f in os.listdir(os.path.join(IN_PATH, o.key)):
 
             logger.info(f'Transforming {o.key} data {f}')
-            if verbosity > 1:
-                print(f'Transforming {o.key} data {f}')
             # parse file using scenario and get records as iterable list
 
-            logger.debug(f'Loading data {f} with {o.scenario}')
+            logger.info(f'Loading data {f} with {o.scenario}')
             data = o.scenario(os.path.join(IN_PATH, o.key, f))
 
-            logger.debug(f'Loaded data {f} with {o.scenario}')
+            logger.info(f'Loaded data {f} with {o.scenario}')
             records = build(custom_map_function, data, o, provider)
 
     # APIScenario subclasses need to make queries and read data from responses
     elif issubclass(o.scenario, manatus.APIScenario):
 
         logger.info(f'Transforming {o.key} data API')
-        if verbosity > 1:
-            print(f'Transforming {o.key} data from API')
 
-        logger.debug(f'Loading API data with {o.scenario}')
+        logger.info(f'Loading API data with {o.scenario}')
         data = o.scenario(o.key)
 
-        logger.debug(f'Loaded API data with {o.scenario}')
+        logger.info(f'Loaded API data with {o.scenario}')
         records = build(custom_map_function, data, o, provider)
 
     if to_console:
-        logger.debug('Printing records')
+        logger.info('Printing records')
         records.print()
 
     else:
-        logger.debug(f'Writing records to {OUT_PATH}')
+        logger.info(f'Writing records to {OUT_PATH}')
         records.write_jsonl(OUT_PATH, prefix=prefix)

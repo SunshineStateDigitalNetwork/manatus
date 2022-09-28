@@ -52,20 +52,20 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
 
     # iterate through sets to harvest
     for set_spec in org_harvest_info['SetList'].split(', '):
-        logger.debug(f'Harvesting {org_key} set {set_spec}')
-        if verbosity > 1:
-            print(f'Harvesting {org_key} set {set_spec}')
+        logger.info(f'Harvesting {org_key} set {set_spec}')
 
         # Sickle harvester
         harvester = sickle.Sickle(oai, iterator=OAIItemIterator, encoding='utf-8')
         harvester.class_mapping['ListRecords'] = SickleRecord
 
         records = harvester.ListRecords(set=set_spec, metadataPrefix=metadata_prefix, ignore_deleted=True)
+        for r in records:
+            logger.debug(f'Record: {r}')
 
         # write XML
         with open(os.path.join(write_path, org_key, f'{set_spec.replace(":", "_")}_{datetime.date.today()}.xml'), 'w',
                   encoding='utf-8') as fp:
-            logger.debug(f'Writing records {fp.name}')
+            logger.info(f'Writing records {fp.name}')
             fp.write('<oai>')
             for record in records:
                 fp.write(record.raw)
