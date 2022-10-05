@@ -57,8 +57,10 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
         # Sickle harvester
         harvester = sickle.Sickle(oai, iterator=OAIItemIterator, encoding='utf-8')
         harvester.class_mapping['ListRecords'] = SickleRecord
+        logger.debug(f'Sickle harvester options: {harvester.__dict__}')
 
         records = harvester.ListRecords(set=set_spec, metadataPrefix=metadata_prefix, ignore_deleted=True)
+        logger.debug(f'Sickle request options: set={set_spec}, metadataPrefix={metadata_prefix}, ignore_deleted=True')
         for r in records:
             logger.debug(f'Record: {r}')
 
