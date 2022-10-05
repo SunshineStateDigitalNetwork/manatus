@@ -61,8 +61,8 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
 
         records = harvester.ListRecords(set=set_spec, metadataPrefix=metadata_prefix, ignore_deleted=True)
         logger.debug(f'Sickle request options: set={set_spec}, metadataPrefix={metadata_prefix}, ignore_deleted=True')
-        for r in records:
-            logger.debug(f'Record: {r}')
+        # for r in records:
+        #     logger.debug(f'Record: {r}')
 
         # write XML
         with open(os.path.join(write_path, org_key, f'{set_spec.replace(":", "_")}_{datetime.date.today()}.xml'), 'w',
@@ -71,4 +71,5 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
             fp.write('<oai>')
             for record in records:
                 fp.write(record.raw)
+                logger.debug(f'Record: {record}')
             fp.write('</oai>')
