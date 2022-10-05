@@ -54,19 +54,19 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
     for set_spec in org_harvest_info['SetList'].split(', '):
         logger.info(f'Harvesting {org_key} set {set_spec}')
 
-        # Sickle harvester
-        harvester = sickle.Sickle(oai, iterator=OAIItemIterator, encoding='utf-8')
-        harvester.class_mapping['ListRecords'] = SickleRecord
-        logger.debug(f'Sickle harvester options: {harvester.__dict__}')
-
-        records = harvester.ListRecords(set=set_spec, metadataPrefix=metadata_prefix, ignore_deleted=True)
-        logger.debug(f'Sickle request options: set={set_spec}, metadataPrefix={metadata_prefix}, ignore_deleted=True')
-        # for r in records:
-        #     logger.debug(f'Record: {r}')
-
-        # write XML
-        with open(os.path.join(write_path, org_key, f'{set_spec.replace(":", "_")}_{datetime.date.today()}.xml'), 'w',
+        # open XML file for appending
+        with open(os.path.join(write_path, org_key, f'{set_spec.replace(":", "_")}_{datetime.date.today()}.xml'), 'a',
                   encoding='utf-8') as fp:
+
+            # Sickle harvester
+            harvester = sickle.Sickle(oai, iterator=OAIItemIterator, encoding='utf-8')
+            harvester.class_mapping['ListRecords'] = SickleRecord
+            logger.debug(f'Sickle harvester options: {harvester.__dict__}')
+
+            # Sickle harvester ListRecords
+            records = harvester.ListRecords(set=set_spec, metadataPrefix=metadata_prefix, ignore_deleted=True)
+            logger.debug(f'Sickle request options: set={set_spec}, metadataPrefix={metadata_prefix}, ignore_deleted=True')
+
             logger.info(f'Writing records {fp.name}')
             fp.write('<oai>')
             for record in records:
