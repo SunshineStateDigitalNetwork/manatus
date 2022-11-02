@@ -46,7 +46,9 @@ def argument_parser():
         formatter_class=CustomHelpFormatter)
     subcommand_parsers = arg_parser.add_subparsers(help='subcommands', dest='subcommand')
     subcommand_parsers.required = False
-    subcommand_parsers.add_parser('status', help='show status')
+
+    status_parser = subcommand_parsers.add_parser('status', help='show status')
+    status_parser.add_argument('--preview', choices=['json', 'jsonl'], help='preview output filename')
 
     # generic config parser
     # adds options to harvest & transform subcommands

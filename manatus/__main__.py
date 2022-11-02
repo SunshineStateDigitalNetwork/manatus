@@ -143,15 +143,26 @@ if __name__ == '__main__':
 
     # Application status
     if args.subcommand == 'status':
-        print("These config files are loaded:")
-        print(f"    {os.path.join(CONFIG_PATH, 'manatus.cfg')}")
-        print(f"    {os.path.join(CONFIG_PATH, 'manatus_harvests.cfg')}")
-        print(f"    {os.path.join(CONFIG_PATH, 'manatus_scenarios.cfg')}")
-        print("XML data path:")
-        print(f"    {os.path.abspath(manatus_config[profile]['InFilePath'])}")
-        print("JSON data path:")
-        print(f"    {os.path.abspath(manatus_config[profile]['OutFilePath'])}")
-        sys.exit(0)
+        if not args.preview:
+            print("These config files are loaded:")
+            print(f"    {os.path.join(CONFIG_PATH, 'manatus.cfg')}")
+            print(f"    {os.path.join(CONFIG_PATH, 'manatus_harvests.cfg')}")
+            print(f"    {os.path.join(CONFIG_PATH, 'manatus_scenarios.cfg')}")
+            print("XML data path:")
+            print(f"    {os.path.abspath(manatus_config[profile]['InFilePath'])}")
+            print("JSON data path:")
+            print(f"    {os.path.abspath(manatus_config[profile]['OutFilePath'])}")
+            sys.exit(0)
+
+        # Application output preview
+        if args.preview == 'json':
+            from datetime import date
+            print(f"{manatus_config[profile]['OutFilePath']}/{manatus_config[profile]['OutFilePrefix']}-{date.today()}.json")
+            sys.exit(0)
+        if args.preview == 'jsonl':
+            from datetime import date
+            print(f"{manatus_config[profile]['OutFilePath']}/{manatus_config[profile]['OutFilePrefix']}-{date.today()}.jsonl")
+            sys.exit(0)
 
     #######################
     # Harvest sub-command #
