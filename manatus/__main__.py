@@ -152,17 +152,15 @@ if __name__ == '__main__':
             print(f"    {os.path.abspath(manatus_config[profile]['InFilePath'])}")
             print("JSON data path:")
             print(f"    {os.path.abspath(manatus_config[profile]['OutFilePath'])}")
-            sys.exit(0)
 
-        # Application output preview
+        # Application output file preview
         if args.preview == 'json':
             from datetime import date
             print(f"{manatus_config[profile]['OutFilePath']}/{manatus_config[profile]['OutFilePrefix']}-{date.today()}.json")
-            sys.exit(0)
+
         if args.preview == 'jsonl':
             from datetime import date
             print(f"{manatus_config[profile]['OutFilePath']}/{manatus_config[profile]['OutFilePrefix']}-{date.today()}.jsonl")
-            sys.exit(0)
 
     #######################
     # Harvest sub-command #
@@ -177,13 +175,11 @@ if __name__ == '__main__':
         if args.run:
             for section in harvest_parser.sections():
                 cli.harvest(harvest_parser[section], section, write_path, verbosity=verbosity)
-                sys.exit(0)
 
         # Run harvest selectively by config key
         if args.select:
             try:
                 cli.harvest(harvest_parser[args.select], args.select, write_path, verbosity=verbosity)
-                sys.exit(0)
             except KeyError:
                 print(f'The supplied organization key was not found in the config file.\nSupplied key: {args.select}')
                 sys.exit(1)
@@ -217,10 +213,10 @@ if __name__ == '__main__':
         # Run transformation
         if args.run:
             for section in scenario_parser.sections():
+                print(section)  # TODO: test
                 try:
                     cli.transform(manatus_config, scenario_parser[section], section, profile, verbosity=verbosity,
                                   to_console=to_console)
-                    sys.exit(0)
                 except FileNotFoundError:
                     logger.warning(f"No data found for {section}")
                     continue
@@ -230,7 +226,6 @@ if __name__ == '__main__':
             try:
                 cli.transform(manatus_config, scenario_parser[args.select], args.select, profile, verbosity=verbosity,
                               to_console=to_console)
-                sys.exit(0)
             except KeyError:
                 print(f'The supplied organization key was not found in the config file.\nSupplied key: {args.select}')
                 sys.exit(1)
