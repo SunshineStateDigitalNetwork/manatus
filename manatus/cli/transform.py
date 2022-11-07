@@ -15,6 +15,7 @@ def build(custom_map_function, data, org, provider):
     records = manatus.RecordGroup()
 
     logger.info(f'Mapping data with {custom_map_function}')
+    # ``map`` returns an iterator of data mapped by function
     mapped_data = map(custom_map_function, data)
 
     logger.info(f'Mapped data with {custom_map_function}')
@@ -41,7 +42,7 @@ def build(custom_map_function, data, org, provider):
                 dpla.sourceResource = sr.data
 
                 logger.info(f"Built record {sr.data['identifier']}")
-                records.append(dpla.data)
+                yield manatus.DPLARecord(dpla.data)
 
         else:
             continue
@@ -116,7 +117,14 @@ def transform(manatus_config, org_transformation_info, org_key, profile, verbosi
             data = o.scenario(os.path.join(IN_PATH, o.key, f))
 
             logger.info(f'Loaded data {f} with {o.scenario}')
-            records = build(custom_map_function, data, o, provider)
+            for record in build(custom_map_function, data, o, provider):
+                if to_console:
+                    logger.info('Printing records')
+                    print(record.data)
+
+                else:
+                    logger.info(f'Writing records to {OUT_PATH}')
+                    record.write_jsonl(OUT_PATH, prefix=prefix)
 
     # APIScenario subclasses need to make queries and read data from responses
     elif issubclass(o.scenario, manatus.APIScenario):
@@ -127,12 +135,12 @@ def transform(manatus_config, org_transformation_info, org_key, profile, verbosi
         data = o.scenario(o.key)
 
         logger.info(f'Loaded API data with {o.scenario}')
-        records = build(custom_map_function, data, o, provider)
+        for record in build(custom_map_function, data, o, provider):
 
-    if to_console:
-        logger.info('Printing records')
-        records.print()
+            if to_console:
+                logger.info('Printing records')
+                print(record.data)
 
-    else:
-        logger.info(f'Writing records to {OUT_PATH}')
-        records.write_jsonl(OUT_PATH, prefix=prefix)
+            else:
+                logger.info(f'Writing records to {OUT_PATH}')
+                record.write_jsonl(OUT_PATH, prefix=prefix)

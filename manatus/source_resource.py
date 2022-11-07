@@ -82,6 +82,55 @@ class Record(object):
         for k in self.__dict__.keys():
             yield k
 
+    def write_json(self, fp, prefix=None, pretty_print=False):
+        """
+        :param str fp:
+        :param str prefix:
+        :param bool pretty_print:
+        :return:
+        """
+        raise NotImplementedError
+        # TODO: writing a valid JSON file requires more hand-holding than just dumping single records
+
+        # if not exists(fp):
+        #     os.mkdir(fp)
+        # if prefix:
+        #     f = f'{prefix}-{date.today()}'
+        # else:
+        #     f = f'{date.today()}'
+        # if exists(join(fp, f'{f}.json')):
+        #     with open(join(fp, f'{f}.json'), 'r', encoding='utf-8') as json_in:
+        #         data = json.load(json_in)
+        #         for record in data:
+        #             self.records.append(record)
+        #     with open(join(fp, f'{f}.json'), 'w', encoding='utf-8') as json_out:
+        #         if pretty_print:
+        #             json.dump(self.records, json_out, indent=2, cls=DPLARecordEncoder)
+        #         else:
+        #             json.dump(self.records, json_out, cls=DPLARecordEncoder)
+        # else:
+        #     with open(join(fp, f'{f}.json'), 'w', encoding='utf-8') as json_out:
+        #         if pretty_print:
+        #             json.dump(self.records, json_out, indent=2, cls=DPLARecordEncoder)
+        #         else:
+        #             json.dump(self.records, json_out, cls=DPLARecordEncoder)
+
+    def write_jsonl(self, fp, prefix=None):
+        """
+
+        :param str fp:
+        :param str prefix:
+        :return:
+        """
+        if not exists(fp):
+            os.mkdir(fp, mode=0o774)
+        if prefix:
+            f = f'{prefix}-{date.today()}'
+        else:
+            f = f'{date.today()}'
+        with open(join(fp, f'{f}.jsonl'), 'a', encoding='utf-8', newline='\n') as json_out:
+            json_out.write(json.dumps(self.data, cls=DPLARecordEncoder) + '\n')
+
 
 class DPLARecord(Record):
 
