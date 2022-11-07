@@ -84,39 +84,39 @@ class Record(object):
 
     def write_json(self, fp, prefix=None, pretty_print=False):
         """
+        Write record as JSON to fp, appending if fp exists
+
         :param str fp:
         :param str prefix:
         :param bool pretty_print:
         :return:
         """
-        raise NotImplementedError
-        # TODO: writing a valid JSON file requires more hand-holding than just dumping single records
 
-        # if not exists(fp):
-        #     os.mkdir(fp)
-        # if prefix:
-        #     f = f'{prefix}-{date.today()}'
-        # else:
-        #     f = f'{date.today()}'
-        # if exists(join(fp, f'{f}.json')):
-        #     with open(join(fp, f'{f}.json'), 'r', encoding='utf-8') as json_in:
-        #         data = json.load(json_in)
-        #         for record in data:
-        #             self.records.append(record)
-        #     with open(join(fp, f'{f}.json'), 'w', encoding='utf-8') as json_out:
-        #         if pretty_print:
-        #             json.dump(self.records, json_out, indent=2, cls=DPLARecordEncoder)
-        #         else:
-        #             json.dump(self.records, json_out, cls=DPLARecordEncoder)
-        # else:
-        #     with open(join(fp, f'{f}.json'), 'w', encoding='utf-8') as json_out:
-        #         if pretty_print:
-        #             json.dump(self.records, json_out, indent=2, cls=DPLARecordEncoder)
-        #         else:
-        #             json.dump(self.records, json_out, cls=DPLARecordEncoder)
+        if not exists(fp):
+            os.mkdir(fp)
+        if prefix:
+            f = f'{prefix}-{date.today()}'
+        else:
+            f = f'{date.today()}'
+        if exists(join(fp, f'{f}.json')):
+            with open(join(fp, f'{f}.json'), 'r', encoding='utf-8') as json_in:
+                data = json.load(json_in)
+                data.append(self.data)
+            with open(join(fp, f'{f}.json'), 'w', encoding='utf-8') as json_out:
+                if pretty_print:
+                    json.dump(data, json_out, indent=2, cls=DPLARecordEncoder)
+                else:
+                    json.dump(data, json_out, cls=DPLARecordEncoder)
+        else:
+            with open(join(fp, f'{f}.json'), 'w', encoding='utf-8') as json_out:
+                if pretty_print:
+                    json.dump(self.data, json_out, indent=2, cls=DPLARecordEncoder)
+                else:
+                    json.dump(self.data, json_out, cls=DPLARecordEncoder)
 
     def write_jsonl(self, fp, prefix=None):
         """
+        Write record as JSONL to fp, appending if fp exists
 
         :param str fp:
         :param str prefix:
