@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='manatus',
-    version='1.0.6',
+    version='1.0.7',
     packages=find_packages(),
     url='http://github.com/SunshineStateDigitalNetwork/manatus',
     license='MIT',
