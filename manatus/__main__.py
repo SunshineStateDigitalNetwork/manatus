@@ -213,7 +213,6 @@ if __name__ == '__main__':
         # Run transformation
         if args.run:
             for section in scenario_parser.sections():
-                print(section)  # TODO: test
                 try:
                     cli.transform(manatus_config, scenario_parser[section], section, profile, verbosity=verbosity,
                                   to_console=to_console)
