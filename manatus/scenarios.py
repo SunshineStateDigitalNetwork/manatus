@@ -634,15 +634,23 @@ class SSDNMODSRecord(MODSRecord):
 
     @property
     def rights(self):
-        # TODO: this is real ugly and will break if there are no RS.org URIs to return
+        # TODO: this is real ugly
+        rights_info = {}
         for rights in self.record.metadata.rights:
             if rights.uri:
-                return rights.uri
+                rights_info['uri'] = rights.uri
             else:
-                if rights.text.startswith('http'):
-                    return rights.text
+                if rights.text.startswith('http://rightsstatements'):
+                    rights_info['uri'] = rights.text
                 else:
-                    continue
+                    rights_info['text'] = rights.text
+            continue
+        if rights_info['uri']:
+            return rights_info['uri']
+        elif rights_info['text']:
+            return rights_info['text']
+        else:
+            return None
 
 
 class InternetArchiveRecord(ManatusRecord):
