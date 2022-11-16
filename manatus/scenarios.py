@@ -645,9 +645,9 @@ class SSDNMODSRecord(MODSRecord):
                 else:
                     rights_info['text'] = rights.text
             continue
-        if rights_info['uri']:
+        if 'uri' in rights_info.keys():
             return rights_info['uri']
-        elif rights_info['text']:
+        elif 'text' in rights_info.keys():
             return rights_info['text']
         else:
             return None
