@@ -5,6 +5,19 @@ from .harvest import *
 from .transform import transform
 
 
+class PartnerKeyLogFilter(logging.Filter):
+    """
+    logging.Filter that adds the partner key as log record attribute
+    """
+    def __init__(self, org_key):
+        super().__init__()
+        self.partner = org_key
+
+    def filter(self, record):
+        record.partner = self.partner
+        return True
+
+
 class CustomHelpFormatter(argparse.HelpFormatter):
     """
     Custom formatting class for argparse

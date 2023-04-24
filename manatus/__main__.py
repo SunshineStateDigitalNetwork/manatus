@@ -105,13 +105,15 @@ if __name__ == '__main__':
 
     # default handler
     log_fh = logging.FileHandler(os.path.join(LOG_PATH, 'manatus.log'))
-    formatter = logging.Formatter('%(name)s: %(asctime)s: %(levelname)s: %(message)s', datefmt='%Y-%m-%d, %I:%M')
+    formatter = logging.Formatter('%(name)s: %(asctime)s: %(levelname)-8s: %(message)s', datefmt='%Y-%m-%d, %I:%M')
     log_fh.setFormatter(formatter)
     log_fh.setLevel(logging.INFO)
 
     # TSV handler
     tsv_fh = logging.FileHandler(os.path.join(LOG_PATH, 'manatus_errors.tsv'))
-    tsv_formatter = logging.Formatter('%(name)s\t%(asctime)s\t%(levelname)s\t%(message)s', datefmt='%Y-%m-%d, %I:%M')
+    tsv_formatter = logging.Formatter('%(partner)s\t%(name)s\t%(asctime)s\t%(levelname)-8s\t%(message)s',
+                                      datefmt='%Y-%m-%d, %I:%M',
+                                      defaults={'partner': profile})
     tsv_fh.setFormatter(tsv_formatter)
     tsv_fh.setLevel(logging.WARNING)
 
@@ -214,15 +216,19 @@ if __name__ == '__main__':
         if args.run:
             for section in scenario_parser.sections():
                 try:
+                    tsv_partner_key_log_filter = cli.PartnerKeyLogFilter(section)
+                    tsv_fh.addFilter(tsv_partner_key_log_filter)
                     cli.transform(manatus_config, scenario_parser[section], section, profile, verbosity=verbosity,
                                   to_console=to_console)
                 except FileNotFoundError:
-                    logger.warning(f"No data found for {section}")
+                    logger.error(f"No data found for {section}")
                     continue
 
         # Run transformation selectively by config key
         if args.select:
             try:
+                tsv_partner_key_log_filter = cli.PartnerKeyLogFilter(args.select)
+                tsv_fh.addFilter(tsv_partner_key_log_filter)
                 cli.transform(manatus_config, scenario_parser[args.select], args.select, profile, verbosity=verbosity,
                               to_console=to_console)
             except KeyError:
