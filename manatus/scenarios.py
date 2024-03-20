@@ -249,17 +249,28 @@ class DCRecord(XMLRecord):
 
     def _value_list(self, elem, ns):
         try:
-            return [value.strip(':').strip(' ') for value in
+            return [self._clean_text(value) for value in
                     self.record.metadata.get_element('.//{0}{1}'.format(ns, elem), delimiter=';')
                     if value]
         except TypeError:
             return None
 
-    def _clean_mark_up(self, text):
+    def _clean_text(self, text):
         mark_up_re = re.compile('<.*?>')
         new_line_re = re.compile('\n')
-        clean_text = re.sub(mark_up_re, '', text)
+        date_time_code_re = re.compile('T\\d{2}:\\d{2}:\\d{2}Z')
+
+        # remove extraneous leading and trailing characters
+        clean_text = text.strip(':').strip(' ')
+
+        # remove markup
+        clean_text = re.sub(mark_up_re, '', clean_text)
+
+        # remove newlines
         clean_text = re.sub(new_line_re, ' ', clean_text)
+
+        # remove timecode data trailing a date
+        clean_text = re.sub(date_time_code_re, '', clean_text)
         return clean_text
 
     @property
@@ -602,7 +613,7 @@ class BepressDCRecord(DCRecord):
     def description(self):
         """dc:description.abstract"""
         try:
-            return [re.sub(' {2}', ' ', self._clean_mark_up(abstract)).strip(' ') for abstract in
+            return [re.sub(' {2}', ' ', self._clean_text(abstract)).strip(' ') for abstract in
                     self.record.metadata.get_element('.//{0}description.abstract'.format(dc), delimiter=';')
                     if abstract]
         except TypeError:
