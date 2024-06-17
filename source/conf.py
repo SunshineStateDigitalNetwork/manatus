@@ -11,6 +11,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 import os
+
 import sys
 
 # from manatus import __version__
@@ -20,12 +21,12 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'manatus'
-copyright = '2022, Matthew Miguez'
+copyright = '2024, Matthew Miguez'
 author = 'Matthew Miguez'
 
 # The full version, including alpha/beta/rc tags
 # release = __version__
-release = '1.0.10'
+release = '1.0.11'
 
 # -- General configuration ---------------------------------------------------
 
