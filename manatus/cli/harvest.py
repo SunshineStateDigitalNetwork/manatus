@@ -59,7 +59,7 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
                   encoding='utf-8') as fp:
 
             # Sickle harvester
-            harvester = sickle.Sickle(oai, iterator=OAIItemIterator, encoding='utf-8')
+            harvester = sickle.Sickle(oai, iterator=OAIItemIterator, encoding='utf-8', headers={"User-Agent": "manatus-ssdn/1.0"}) # todo: make this dynamic some day
             harvester.class_mapping['ListRecords'] = SickleRecord
             logger.debug(f'Sickle harvester options: {harvester.__dict__}')
 
