@@ -26,7 +26,7 @@ author = 'Matthew Miguez'
 
 # The full version, including alpha/beta/rc tags
 # release = __version__
-release = '1.0.12'
+release = '1.0.13'
 
 # -- General configuration ---------------------------------------------------
 
