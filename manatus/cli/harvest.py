@@ -6,6 +6,7 @@ import sickle
 from sickle import models
 from sickle.iterator import OAIItemIterator
 from sickle.utils import xml_to_dict
+from requests.exceptions import SSLError
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -59,13 +60,23 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
                   encoding='utf-8') as fp:
 
             # Sickle harvester
-            harvester = sickle.Sickle(oai, iterator=OAIItemIterator, encoding='utf-8', headers={"User-Agent": "manatus-ssdn/1.0"}) # todo: make this dynamic some day
+            harvester = sickle.Sickle(oai, iterator=OAIItemIterator, encoding='utf-8',
+                                      headers={"User-Agent": "manatus-ssdn/1.0"})  # todo: make this dynamic some day
             harvester.class_mapping['ListRecords'] = SickleRecord
             logger.debug(f'Sickle harvester options: {harvester.__dict__}')
 
             # Sickle harvester ListRecords
-            records = harvester.ListRecords(set=set_spec, metadataPrefix=metadata_prefix, ignore_deleted=True)
-            logger.debug(f'Sickle request options: set={set_spec}, metadataPrefix={metadata_prefix}, ignore_deleted=True')
+            try:
+                records = harvester.ListRecords(set=set_spec, metadataPrefix=metadata_prefix, ignore_deleted=True)
+                logger.debug(
+                    f'Sickle request options: set={set_spec}, metadataPrefix={metadata_prefix}, ignore_deleted=True')
+            except SSLError:
+                logger.warning(f'SSL certification failed: falling back to unencrypted connection')
+                harvester = sickle.Sickle(oai, iterator=OAIItemIterator, encoding='utf-8',
+                                          headers={"User-Agent": "manatus-ssdn/1.0"}, verify=False)
+                records = harvester.ListRecords(set=set_spec, metadataPrefix=metadata_prefix, ignore_deleted=True)
+                logger.debug(
+                    f'Sickle request options: set={set_spec}, metadataPrefix={metadata_prefix}, ignore_deleted=True')
 
             logger.info(f'Writing records {fp.name}')
             fp.write('<oai>')
