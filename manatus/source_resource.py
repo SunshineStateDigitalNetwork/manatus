@@ -15,6 +15,10 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
+def opener_664_permissions(path, flags):
+    return os.open(path, flags, 0o664)
+
+
 class Record(object):
 
     def __init__(self):
@@ -102,13 +106,13 @@ class Record(object):
             with open(join(fp, f'{f}.json'), 'r', encoding='utf-8') as json_in:
                 data = json.load(json_in)
                 data.append(self.data)
-            with open(join(fp, f'{f}.json'), 'w', encoding='utf-8') as json_out:
+            with open(join(fp, f'{f}.json'), 'w', encoding='utf-8', opener=opener_664_permissions) as json_out:
                 if pretty_print:
                     json.dump(data, json_out, indent=2, cls=DPLARecordEncoder)
                 else:
                     json.dump(data, json_out, cls=DPLARecordEncoder)
         else:
-            with open(join(fp, f'{f}.json'), 'w', encoding='utf-8') as json_out:
+            with open(join(fp, f'{f}.json'), 'w', encoding='utf-8', opener=opener_664_permissions) as json_out:
                 if pretty_print:
                     json.dump(self.data, json_out, indent=2, cls=DPLARecordEncoder)
                 else:
@@ -128,7 +132,7 @@ class Record(object):
             f = f'{prefix}-{date.today()}'
         else:
             f = f'{date.today()}'
-        with open(join(fp, f'{f}.jsonl'), 'a', encoding='utf-8', newline='\n') as json_out:
+        with open(join(fp, f'{f}.jsonl'), 'a', encoding='utf-8', newline='\n', opener=opener_664_permissions) as json_out:
             json_out.write(json.dumps(self.data, cls=DPLARecordEncoder) + '\n')
 
 
@@ -241,13 +245,13 @@ class RecordGroup(object):
                 data = json.load(json_in)
                 for record in data:
                     self.records.append(record)
-            with open(join(fp, f'{f}.json'), 'w', encoding='utf-8') as json_out:
+            with open(join(fp, f'{f}.json'), 'w', encoding='utf-8', opener=opener_664_permissions) as json_out:
                 if pretty_print:
                     json.dump(self.records, json_out, indent=2, cls=DPLARecordEncoder)
                 else:
                     json.dump(self.records, json_out, cls=DPLARecordEncoder)
         else:
-            with open(join(fp, f'{f}.json'), 'w', encoding='utf-8') as json_out:
+            with open(join(fp, f'{f}.json'), 'w', encoding='utf-8', opener=opener_664_permissions) as json_out:
                 if pretty_print:
                     json.dump(self.records, json_out, indent=2, cls=DPLARecordEncoder)
                 else:
@@ -266,7 +270,7 @@ class RecordGroup(object):
             f = f'{prefix}-{date.today()}'
         else:
             f = f'{date.today()}'
-        with open(join(fp, f'{f}.jsonl'), 'a', encoding='utf-8', newline='\n') as json_out:
+        with open(join(fp, f'{f}.jsonl'), 'a', encoding='utf-8', newline='\n', opener=opener_664_permissions) as json_out:
             for rec in self.records:
                 json_out.write(json.dumps(rec, cls=DPLARecordEncoder) + '\n')
 
