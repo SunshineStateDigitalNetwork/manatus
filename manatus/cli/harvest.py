@@ -12,6 +12,10 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
+def opener_664_permissions(path, flags):
+    return os.open(path, flags, 0o664)
+
+
 class SickleRecord(models.Record):
 
     def __init__(self, record_element, strip_ns=True):
@@ -57,7 +61,7 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
 
         # open XML file for appending
         with open(os.path.join(write_path, org_key, f'{set_spec.replace(":", "_")}_{datetime.date.today()}.xml'), 'a',
-                  encoding='utf-8') as fp:
+                  encoding='utf-8', opener=opener_664_permissions) as fp:
 
             # Sickle harvester
             harvester = sickle.Sickle(oai, iterator=OAIItemIterator, encoding='utf-8',
