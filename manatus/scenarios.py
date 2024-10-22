@@ -6,6 +6,7 @@ import logging
 import re
 
 import requests
+from manatus.exceptions import APIScenarioStatusCodeException
 from pymods import OAIReader
 
 dc = '{http://purl.org/dc/elements/1.1/}'
@@ -161,18 +162,22 @@ class APIScenario(Scenario):
         """
         logger.debug(f"Running {__name__}.APIScenario query to {url}")
         r = requests.get(url)
-        data = json.loads(r.text.replace('\\u00a0', ''))
-        if count_key:
-            record_count = [v for v in self._item_generator(data, count_key)][0]
-        self.records = [record for record in self._item_generator(data, record_key)]
-        if record_count:
-            page = 1
-            while len(self.records) < record_count:
-                page += 1
-                data = json.loads(requests.get(url + f'&{page_key}={page}').text.replace('\\u00a0', ''))
-                self.records = self.records + [record for record in self._item_generator(data, record_key)]
-                continue
-        Scenario.__init__(self, self.records)
+        if r.status_code == 200:
+            data = json.loads(r.text.replace('\\u00a0', ''))
+            if count_key:
+                record_count = [v for v in self._item_generator(data, count_key)][0]
+            self.records = [record for record in self._item_generator(data, record_key)]
+            if record_count:
+                page = 1
+                while len(self.records) < record_count:
+                    page += 1
+                    data = json.loads(requests.get(url + f'&{page_key}={page}').text.replace('\\u00a0', ''))
+                    self.records = self.records + [record for record in self._item_generator(data, record_key)]
+                    continue
+            Scenario.__init__(self, self.records)
+        else:
+            raise APIScenarioStatusCodeException(f"{r.status_code} status code returned for URL: {url}")
+
 
     def _item_generator(self, json_input, lookup_key):
         if isinstance(json_input, dict):

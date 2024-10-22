@@ -3,9 +3,24 @@ class ManatusException(Exception):
 
 
 class ScenarioException(ManatusException):
-    """
 
-    """
+    def __init__(self, msg):
+        ManatusException.__init__(self, msg)
+        self.msg = msg
+
+
+class APIScenarioException(ScenarioException):
+
+    def __init__(self, msg):
+        ScenarioException.__init__(self, msg)
+        self.msg = msg
+
+
+class APIScenarioStatusCodeException(APIScenarioException, ValueError):
+
+    def __init__(self, msg):
+        ValueError.__init__(self, msg)
+        self.msg = msg
 
 
 class SSDN_QDCException(ScenarioException, TypeError):
