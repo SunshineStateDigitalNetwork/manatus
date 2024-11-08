@@ -59,6 +59,10 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
     for set_spec in org_harvest_info['SetList'].split(', '):
         logger.info(f'Harvesting {org_key} set {set_spec}')
 
+        # Config value 'all' in harvest set list will harvest whole repository
+        if set_spec.lower() == 'all':
+            set_spec = None
+
         # open XML file for appending
         with open(os.path.join(write_path, org_key, f'{set_spec.replace(":", "_")}_{datetime.date.today()}.xml'), 'a',
                   encoding='utf-8', opener=opener_664_permissions) as fp:
