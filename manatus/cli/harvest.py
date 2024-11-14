@@ -62,9 +62,12 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
         # Config value 'all' in harvest set list will harvest whole repository
         if set_spec.lower() == 'all':
             set_spec = None
+            set_spec_string = 'all'
+        else:
+            set_spec_string = set_spec.replace(":", "_")
 
         # open XML file for appending
-        with open(os.path.join(write_path, org_key, f'{set_spec.replace(":", "_")}_{datetime.date.today()}.xml'), 'a',
+        with open(os.path.join(write_path, org_key, f'{set_spec_string}_{datetime.date.today()}.xml'), 'a',
                   encoding='utf-8', opener=opener_664_permissions) as fp:
 
             # Sickle harvester
