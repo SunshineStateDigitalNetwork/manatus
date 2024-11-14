@@ -8,4 +8,4 @@ from .scenarios import *
 from .source_resource import *
 from .tests import *
 
-__version__ = '1.0.14'
+__version__ = '1.0.15'
