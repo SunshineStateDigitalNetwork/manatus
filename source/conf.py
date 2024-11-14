@@ -14,7 +14,7 @@ import os
 
 import sys
 
-# from manatus import __version__
+from manatus import __version__
 
 sys.path.insert(0, os.path.abspath('../'))
 
@@ -25,8 +25,8 @@ copyright = '2024, Matthew Miguez'
 author = 'Matthew Miguez'
 
 # The full version, including alpha/beta/rc tags
-# release = __version__
-release = '1.0.14'
+release = __version__
+#release = '1.0.14'
 
 # -- General configuration ---------------------------------------------------
 

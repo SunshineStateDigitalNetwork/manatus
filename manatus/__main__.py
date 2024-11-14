@@ -29,6 +29,8 @@ logger.addHandler(logging.NullHandler())
 
 if __name__ == '__main__':
 
+    logger.debug(f'Starting manatus {manatus.__version__}')
+
     # Locating configs
     if os.getenv('MANATUS_CONFIG'):
         CONFIG_PATH = Path(os.getenv('MANATUS_CONFIG'))
@@ -146,6 +148,7 @@ if __name__ == '__main__':
     # Application status
     if args.subcommand == 'status':
         if not args.preview:
+            print(f"Running manatus {manatus.__version__}")
             print("These config files are loaded:")
             print(f"    {os.path.join(CONFIG_PATH, 'manatus.cfg')}")
             print(f"    {os.path.join(CONFIG_PATH, 'manatus_harvests.cfg')}")
