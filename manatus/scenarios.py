@@ -329,6 +329,11 @@ class DCRecord(XMLRecord):
         return self._value_list('rights', dc)
 
     @property
+    def rights(self):
+        """dc:source"""
+        return self._value_list('source', dc)
+
+    @property
     def subject(self):
         """dc:subject"""
         try:
