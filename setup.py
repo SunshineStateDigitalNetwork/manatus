@@ -15,7 +15,9 @@ setup(
     install_requires=[
         'pymods>=2.0.9',
         'sickle>=0.7.0',
-        'requests'
+        'requests',
+        'dateparser',
+        'bs4',
     ],
     include_package_data=True,
     classifiers=[
