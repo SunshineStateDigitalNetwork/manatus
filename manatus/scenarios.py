@@ -11,6 +11,7 @@ from pymods import OAIReader
 
 dc = '{http://purl.org/dc/elements/1.1/}'
 dcterms = '{http://purl.org/dc/terms/}'
+marc = '{http://www.loc.gov/MARC21/slim}'
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -117,6 +118,20 @@ class SSDNMODS(XMLScenario):
         logger.debug(f"Loading {xml_path} with {__name__}.SSDNMODS")
         XMLScenario.__init__(self, xml_path)
         self.records = [MODSRecord(record) for record in self.records]
+
+
+class MARCXML(XMLScenario):
+
+    def __init__(self, xml_path):
+        """
+        Parser and container for :py:class:`MARCXMLRecord records
+
+        :param str xml_path: Path to an XML file of OAI-PMH MARCXML records
+
+        """
+        logger.debug(f"Loading {xml_path} with {__name__}.MARCXML")
+        XMLScenario.__init__(self, xml_path)
+        self.records = [MARCXMLRecord(record) for record in self.records]
 
 
 class BepressDC(SSDNDC):
@@ -672,6 +687,305 @@ class SSDNMODSRecord(MODSRecord):
             return rights_info['text']
         else:
             return None
+
+
+class MARCXMLRecord(XMLRecord):
+    """
+    MARCXML record class making MAPv4-ish elements available through properties.
+
+    Exposes:
+      - title (from 245)
+      - rights (prefers URI-bearing 540/542/856; falls back to textual 540/506)
+      - subject (600/610/611/630/648/650/655; emits [{'name':..., '@id':...}, ...] when possible)
+      - type (prefers 336$a; falls back to leader/06 mapping)
+    """
+
+    _URI_RE = re.compile(r'^(https?://|urn:|info:)')
+
+    def __init__(self, record):
+        super().__init__(record)
+        self.oai_urn = self.record.oai_urn
+        self.metadata = self.record.metadata
+        self.elem = self._coerce_record_elem(self.record)
+
+    # ----------------------------
+    # Core element coercion/helpers
+    # ----------------------------
+    def _coerce_record_elem(self, md):
+        """
+        Try to get the actual MARCXML <record> element.
+        Works if md is already an Element, or a wrapper with .elem/.record, etc.
+        """
+        root = md
+
+        # common wrapper patterns
+        for attr in ("elem", "record", "root"):
+            if hasattr(root, attr):
+                try:
+                    root = getattr(root, attr)
+                except Exception:
+                    pass
+
+        # If we’re already at <record>, great. Otherwise try to find it.
+        try:
+            if getattr(root, "tag", None) == f"{marc}record" or getattr(root, "tag", None) == "record":
+                return root
+        except Exception:
+            pass
+
+        # Try namespace-qualified record first, then unqualified fallback
+        try:
+            rec = root.find(f".//{marc}record")
+            print('found record')
+            if rec is not None:
+                return rec
+        except Exception:
+            pass
+
+        try:
+            rec = root.find(".//record")
+            if rec is not None:
+                return rec
+        except Exception:
+            pass
+
+        # Last resort: return what we got; helpers may still work if it’s record-ish
+        return root
+
+    def datafields(self, tag=None):
+        """Return list of <datafield> elements, optionally filtered by @tag."""
+        if tag is None:
+            return self.record.findall(f".//{marc}datafield")
+        return self.record.findall(f".//{marc}datafield[@tag='{tag}']")
+
+
+    def controlfields(self, tag=None):
+        """Return list of <controlfield> elements, optionally filtered by @tag."""
+        if tag is None:
+            return self.elem.findall(f".//{marc}controlfield")
+        return self.elem.findall(f".//{marc}controlfield[@tag='{tag}']")
+
+    def subfields(self, field_elem, codes=None):
+        """
+        Return list of <subfield> elements from a datafield, optionally filtered by code(s).
+        `codes` can be a string ('a') or iterable ('ab').
+        """
+        sfs = field_elem.findall(f"{marc}subfield")
+        if not codes:
+            return sfs
+        if isinstance(codes, str):
+            codes = set(codes)
+        else:
+            codes = set(codes)
+        return [sf for sf in sfs if sf.get("code") in codes]
+
+    def _sf_text(self, field_elem, code):
+        """First subfield text for code, cleaned."""
+        for sf in self.subfields(field_elem, codes=code):
+            txt = (sf.text or "").strip()
+            if txt:
+                return self._clean_text(txt)
+        return None
+
+    def _sf_texts(self, field_elem, codes):
+        """All subfield texts for given code(s), cleaned, in-order."""
+        return [self._clean_text((sf.text or "").strip())
+                for sf in self.subfields(field_elem, codes=codes)
+                if (sf.text or "").strip()]
+
+    def _clean_text(self, text):
+        """Light cleanup similar to DCRecord._clean_text, but MARC-friendly."""
+        text = re.sub(r"\s+", " ", text).strip()
+        # common trailing separators when joining MARC title parts
+        return text
+
+    def _clean_title_punct(self, title):
+        """
+        Remove some MARC-ish trailing punctuation introduced by concatenation.
+        Keep this conservative; you can tune based on local data.
+        """
+        title = re.sub(r"\s+", " ", title).strip()
+        title = title.rstrip(" /")
+        title = title.rstrip(" :")
+        title = title.rstrip(" ,")
+        title = title.strip()
+        return title or None
+
+    # ----------------------------
+    # MAP-ish properties
+    # ----------------------------
+    @property
+    def title(self):
+        """
+        Primary title from 245 (a, b, n, p). Returns a string or None.
+        """
+        titles = self.titles  # uses helper below
+        return titles[0] if titles else None
+
+    @property
+    def titles(self):
+        """
+        All 245 titles (a, b, n, p), one per 245 field, in record order.
+        This aligns with your earlier “all 245 values” need.
+        """
+        out = []
+        for f in self.datafields("245"):
+            parts = []
+            for code in ("a", "b", "n", "p"):
+                parts.extend(self._sf_texts(f, code))
+            if parts:
+                out.append(self._clean_title_punct(" ".join(parts)))
+        return [t for t in out if t]
+
+    @property
+    def rights(self):
+        """
+        Rights: prefer URI forms if present, else textual statement.
+        Checks common MARC fields:
+          - 540 (Terms Governing Use and Reproduction): $u for URI, $a for text
+          - 542 (Information Relating to Copyright Status): $u for URI, $l/$d etc. (fallback)
+          - 856 (Electronic Location and Access): $u if it looks like a rights URI
+          - 506 (Restrictions on Access): $a fallback
+        """
+        # 540: $u then $a
+        for f in self.datafields("540"):
+            for u in self._sf_texts(f, "u"):
+                if self._URI_RE.match(u):
+                    return u
+            a = self._sf_text(f, "a")
+            if a:
+                # if someone shoved a URI into $a
+                if self._URI_RE.match(a):
+                    return a
+                return a
+
+        # 542: $u then any reasonable text-ish bits
+        for f in self.datafields("542"):
+            for u in self._sf_texts(f, "u"):
+                if self._URI_RE.match(u):
+                    return u
+            for code in ("l", "d", "f", "g", "n"):  # conservative fallbacks
+                txt = self._sf_text(f, code)
+                if txt:
+                    return txt
+
+        # 856: look for rights-ish links (rightsstatements, creativecommons, etc.)
+        for f in self.datafields("856"):
+            for u in self._sf_texts(f, "u"):
+                if self._URI_RE.match(u) and (
+                    "rightsstatements.org" in u
+                    or "creativecommons.org" in u
+                    or "/rights" in u
+                ):
+                    return u
+
+        # 506: $a fallback
+        for f in self.datafields("506"):
+            a = self._sf_text(f, "a")
+            if a:
+                return a
+
+        return None
+
+    @property
+    def subject(self):
+        """
+        Subjects as list of dicts:
+          [{'name': 'Topic -- Subdivision', '@id': 'http://…'}, ...]
+        Pulls from 600/610/611/630/648/650/655.
+        Uses $1 (URI) or $0 (control/URI) if it looks like a URI-ish token.
+        """
+        tags = ("600", "610", "611", "630", "648", "650", "655")
+        out = []
+
+        for tag in tags:
+            for f in self.datafields(tag):
+                # authority identifiers
+                uri = None
+                for candidate in self._sf_texts(f, "1") + self._sf_texts(f, "0"):
+                    if self._URI_RE.match(candidate):
+                        uri = candidate
+                        break
+
+                # build label: keep MARC subdivision semantics for x/y/z/v
+                pieces = []
+                subdivisions = []
+
+                for sf in self.subfields(f):
+                    code = sf.get("code")
+                    txt = (sf.text or "").strip()
+                    if not txt:
+                        continue
+                    txt = self._clean_text(txt)
+
+                    # skip control-ish and non-display subfields
+                    if code in {"0", "1", "2", "3", "4", "5", "6", "7", "8", "w"}:
+                        continue
+
+                    if code in {"x", "y", "z", "v"}:
+                        subdivisions.append(txt)
+                    else:
+                        pieces.append(txt)
+
+                if not pieces and not subdivisions:
+                    continue
+
+                label = " ".join(pieces).strip()
+                if subdivisions:
+                    label = f"{label} -- " + " -- ".join(subdivisions) if label else " -- ".join(subdivisions)
+
+                label = label.strip(" .;/,:")
+                if not label:
+                    continue
+
+                out.append({"@id": uri, "name": label} if uri else {"name": label})
+
+        return out or None
+
+    @property
+    def type(self):
+        """
+        Type of resource:
+          - Prefer RDA content type in 336$a (often already 'text', 'still image', etc.)
+          - Else map leader/06 to a coarse type string
+        """
+        # 336$a
+        for f in self.datafields("336"):
+            a = self._sf_text(f, "a")
+            if a:
+                return a
+
+        # leader mapping
+        leader_elems = self.elem.findall(f".//{marc}leader")
+        if leader_elems and (leader_elems[0].text or ""):
+            leader = leader_elems[0].text
+            if len(leader) > 6:
+                t06 = leader[6]
+                return {
+                    "a": "text",
+                    "c": "notated music",
+                    "d": "notated music",
+                    "e": "cartographic",
+                    "f": "cartographic",
+                    "g": "moving image",
+                    "i": "sound recording",
+                    "j": "sound recording",
+                    "k": "still image",
+                    "m": "software, multimedia",
+                    "o": "kit",
+                    "p": "mixed material",
+                    "r": "three-dimensional object",
+                    "t": "manuscript text",
+                }.get(t06, None)
+
+        return None
+
+    def controlfield_008(self):
+        """
+        Optional helper to access 008 as-is (useful when debugging spacing/normalization issues). [3](https://teams.microsoft.com/l/message/19:2b5f94eeae384a978ff4800e9bbbdd0d@thread.v2/1714145233129?context=%7B%22contextType%22:%22chat%22%7D)
+        """
+        cfs = self.controlfields("008")
+        return (cfs[0].text if cfs and cfs[0].text else None)
 
 
 class InternetArchiveRecord(ManatusRecord):

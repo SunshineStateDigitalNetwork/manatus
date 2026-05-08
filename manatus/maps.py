@@ -71,3 +71,58 @@ def mods_standard_map(record):
     sr.type = record.type
     tn = None
     yield sr, tn
+
+
+
+def marc_standard_map(record):
+    """
+    Standard MARCXML → DPLA MAPv4 transformation.
+
+    Expects a MARCXMLRecord instance exposing normalized properties.
+    Returns a SourceResource and optional thumbnail (None).
+    """
+    logger.debug(f"Loaded {__name__}.marc_standard_map map")
+
+    sr = SourceResource()
+    tn = None
+
+    # --- identifier ---
+    try:
+        sr.identifier = record.harvest_id
+    except AttributeError:
+        logger.warning("No harvest_id present on MARCXMLRecord")
+
+    # --- title ---
+    if record.title:
+        sr.title = record.title
+
+    # --- subject ---
+    if record.subject:
+        # record.subject is already normalized to MAP-ish dicts
+        sr.subject = record.subject
+
+    # --- rights ---
+    if record.rights:
+        if isinstance(record.rights, str):
+            if record.rights.startswith("http"):
+                sr.rights = [{"@id": record.rights}]
+            else:
+                sr.rights = [{"text": record.rights}]
+        else:
+            # defensive fallback
+            sr.rights = record.rights
+
+    # --- type ---
+    if record.type:
+        sr.type = record.type
+
+    # --- creator / contributor ---
+    # Not implemented by default for MARC standard map.
+    # Prefer custom maps for institution-specific relator logic.
+    #
+    # if record.creator:
+    #     sr.creator = record.creator
+    # if record.contributor:
+    #     sr.contributor = record.contributor
+
+    yield sr, tn
