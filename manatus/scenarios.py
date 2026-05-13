@@ -691,13 +691,9 @@ class SSDNMODSRecord(MODSRecord):
 
 class MARCXMLRecord(XMLRecord):
     """
-    MARCXML record class making MAPv4-ish elements available through properties.
+    MARCXML record class making MAPv4 elements available through ``self.<element>`` properties
 
-    Exposes:
-      - title (from 245)
-      - rights (prefers URI-bearing 540/542/856; falls back to textual 540/506)
-      - subject (600/610/611/630/648/650/655; emits [{'name':..., '@id':...}, ...] when possible)
-      - type (prefers 336$a; falls back to leader/06 mapping)
+    :param record: OAI-PMH MARCXML record
     """
 
     _URI_RE = re.compile(r'^(https?://|urn:|info:)')
@@ -708,9 +704,7 @@ class MARCXMLRecord(XMLRecord):
         self.metadata = self.record.metadata
         self.elem = self._coerce_record_elem(self.record)
 
-    # ----------------------------
     # Core element coercion/helpers
-    # ----------------------------
     def _coerce_record_elem(self, md):
         """
         Try to get the actual MARCXML <record> element.
@@ -811,31 +805,122 @@ class MARCXMLRecord(XMLRecord):
         title = title.strip()
         return title or None
 
-    # ----------------------------
-    # MAP-ish properties
-    # ----------------------------
-    @property
-    def title(self):
-        """
-        Primary title from 245 (a, b, n, p). Returns a string or None.
-        """
-        titles = self.titles  # uses helper below
-        return titles[0] if titles else None
+    def _name_fields(self, tags):
+        out = []
+        for tag in tags:
+            for f in self.datafields(tag):
+                parts = []
+                for code in ("a", "b", "c", "d", "q"):
+                    parts.extend(self._sf_texts(f, code))
+                if parts:
+                    out.append(" ".join(parts).rstrip(" ,.;"))
+        return out or None
 
     @property
-    def titles(self):
-        """
-        All 245 titles (a, b, n, p), one per 245 field, in record order.
-        This aligns with your earlier “all 245 values” need.
-        """
-        out = []
+    def contributor(self):
+        return self._name_fields(("700", "710", "711"))
+
+    @property
+    def creator(self):
+        return self._name_fields(("100", "110", "111"))
+
+    @property
+    def date(self):
+        for tag in ("264", "260"):
+            for f in self.datafields(tag):
+                c = self._sf_text(f, "c")
+                if c:
+                    return c.strip("[]().")
+
+        cf008 = self.controlfield_008()
+        if cf008 and len(cf008) >= 11:
+            year = cf008[7:11]
+            if year.isdigit():
+                return year
+
+        return None
+
+    @property
+    def description(self):
+        for f in self.datafields("520"):
+            a = self._sf_text(f, "a")
+            if a:
+                return a
+
+        # fallback: subtitle-ish description
         for f in self.datafields("245"):
+            b = self._sf_text(f, "b")
+            if b:
+                return b
+
+        return None
+
+    @property
+    def format(self):
+        for f in self.datafields("300"):
             parts = []
-            for code in ("a", "b", "n", "p"):
+            for code in ("a", "b", "c"):
                 parts.extend(self._sf_texts(f, code))
             if parts:
-                out.append(self._clean_title_punct(" ".join(parts)))
-        return [t for t in out if t]
+                return " ".join(parts)
+
+        for tag in ("337", "338"):
+            for f in self.datafields(tag):
+                a = self._sf_text(f, "a")
+                if a:
+                    return a
+
+        return None
+
+    @property
+    def identifier(self):
+        for f in self.datafields("856"):
+            for u in self._sf_texts(f, "u"):
+                if self._URI_RE.match(u):
+                    return u
+
+        for tag in ("020", "022"):
+            for f in self.datafields(tag):
+                a = self._sf_text(f, "a")
+                if a:
+                    return a.split()[0]
+
+        # return 'temp' # test
+        return self.oai_urn
+
+    @property
+    def language(self):
+        for f in self.datafields("041"):
+            for a in self._sf_texts(f, "a"):
+                return a
+
+        cf008 = self.controlfield_008()
+        if cf008 and len(cf008) >= 38:
+            lang = cf008[35:38]
+            if lang.strip():
+                return lang
+
+        return None
+
+    @property
+    def place(self):
+        for tag in ("264", "260"):
+            for f in self.datafields(tag):
+                a = self._sf_text(f, "a")
+                if a:
+                    return a.rstrip(" :,;")
+
+        return None
+
+    @property
+    def publisher(self):
+        for tag in ("264", "260"):
+            for f in self.datafields(tag):
+                b = self._sf_text(f, "b")
+                if b:
+                    return b.rstrip(" :,;")
+
+        return None
 
     @property
     def rights(self):
@@ -885,6 +970,17 @@ class MARCXMLRecord(XMLRecord):
             if a:
                 return a
 
+        return None
+
+    @property
+    def shown_at(self):
+        """
+        Landing page URL (prefer 856 with no $y 'thumbnail' semantics).
+        """
+        for f in self.datafields("856"):
+            u = self._sf_text(f, "u")
+            if u and self._URI_RE.match(u):
+                return u
         return None
 
     @property
@@ -943,6 +1039,29 @@ class MARCXMLRecord(XMLRecord):
         return out or None
 
     @property
+    def title(self):
+        """
+        Primary title from 245 (a, b, n, p). Returns a string or None.
+        """
+        titles = self.titles  # uses helper below
+        return titles[0] if titles else None
+
+    @property
+    def titles(self):
+        """
+        All 245 titles (a, b, n, p), one per 245 field, in record order.
+        This aligns with your earlier “all 245 values” need.
+        """
+        out = []
+        for f in self.datafields("245"):
+            parts = []
+            for code in ("a", "b", "n", "p"):
+                parts.extend(self._sf_texts(f, code))
+            if parts:
+                out.append(self._clean_title_punct(" ".join(parts)))
+        return [t for t in out if t]
+
+    @property
     def type(self):
         """
         Type of resource:
@@ -980,9 +1099,22 @@ class MARCXMLRecord(XMLRecord):
 
         return None
 
+    @property
+    def thumbnail(self):
+        for f in self.datafields("856"):
+            y = self._sf_text(f, "y") or ""
+            u = self._sf_text(f, "u")
+            if u and (
+                    "thumbnail" in y.lower()
+                    or "preview" in y.lower()
+                    or u.lower().endswith((".jpg", ".jpeg", ".png"))
+            ):
+                return u
+        return None
+
     def controlfield_008(self):
         """
-        Optional helper to access 008 as-is (useful when debugging spacing/normalization issues). [3](https://teams.microsoft.com/l/message/19:2b5f94eeae384a978ff4800e9bbbdd0d@thread.v2/1714145233129?context=%7B%22contextType%22:%22chat%22%7D)
+        Optional helper to access 008 as-is (useful when debugging spacing/normalization issues)
         """
         cfs = self.controlfields("008")
         return (cfs[0].text if cfs and cfs[0].text else None)
