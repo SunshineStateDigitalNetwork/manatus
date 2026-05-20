@@ -818,7 +818,7 @@ class MARCXMLRecord(XMLRecord):
 
     @property
     def contributor(self):
-        return self._name_fields(("700", "710", "711"))
+        return self._name_fields(("700", "710", "711", "720"))
 
     @property
     def creator(self):
@@ -862,13 +862,13 @@ class MARCXMLRecord(XMLRecord):
             for code in ("a", "b", "c"):
                 parts.extend(self._sf_texts(f, code))
             if parts:
-                return " ".join(parts)
+                return " ".join(parts).strip(' ;')
 
-        for tag in ("337", "338"):
+        for tag in ("337", "338", "530"):
             for f in self.datafields(tag):
                 a = self._sf_text(f, "a")
                 if a:
-                    return a
+                    return a.strip(' ;')
 
         return None
 
@@ -885,7 +885,6 @@ class MARCXMLRecord(XMLRecord):
                 if a:
                     return a.split()[0]
 
-        # return 'temp' # test
         return self.oai_urn
 
     @property
@@ -973,14 +972,14 @@ class MARCXMLRecord(XMLRecord):
         return None
 
     @property
-    def shown_at(self):
+    def is_shown_at(self):
         """
         Landing page URL (prefer 856 with no $y 'thumbnail' semantics).
         """
         for f in self.datafields("856"):
             u = self._sf_text(f, "u")
             if u and self._URI_RE.match(u):
-                return u
+                return u.split('/files')[0]
         return None
 
     @property
@@ -1031,6 +1030,8 @@ class MARCXMLRecord(XMLRecord):
                     label = f"{label} -- " + " -- ".join(subdivisions) if label else " -- ".join(subdivisions)
 
                 label = label.strip(" .;/,:")
+                if label.endswith(" ( lcsh )"):
+                    label = label[:-9]
                 if not label:
                     continue
 
@@ -1101,15 +1102,14 @@ class MARCXMLRecord(XMLRecord):
 
     @property
     def thumbnail(self):
-        for f in self.datafields("856"):
-            y = self._sf_text(f, "y") or ""
-            u = self._sf_text(f, "u")
-            if u and (
+        for f in self.datafields("694"):
+            y = self._sf_text(f, "y")
+            if y and (
                     "thumbnail" in y.lower()
                     or "preview" in y.lower()
-                    or u.lower().endswith((".jpg", ".jpeg", ".png"))
+                    or y.lower().endswith((".jpg", ".jpeg", ".png"))
             ):
-                return u
+                return y
         return None
 
     def controlfield_008(self):
