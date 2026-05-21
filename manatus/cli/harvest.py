@@ -72,7 +72,10 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
 
             # Sickle harvester
             harvester = sickle.Sickle(oai, iterator=OAIItemIterator, encoding='utf-8',
-                                      headers={"User-Agent": "manatus-ssdn/1.0"})  # todo: make this dynamic some day
+                                      headers={"User-Agent": "manatus-ssdn/1.0"}, # todo: make this dynamic some day
+                                      max_retries=3,
+                                      retry_status_codes=[429, 500, 502, 503, 504],
+                                      default_retry_after=5)
             harvester.class_mapping['ListRecords'] = SickleRecord
             logger.debug(f'Sickle harvester options: {harvester.__dict__}')
 

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='manatus',
-    version='1.0.16',
+    version='1.0.17',
     packages=find_packages(),
     url='http://github.com/SunshineStateDigitalNetwork/manatus',
     license='MIT',
@@ -27,6 +27,7 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Topic :: Text Processing :: Markup :: XML',
     ],
     test_suite='manatus.tests',
