@@ -272,7 +272,7 @@ class DCRecord(XMLRecord):
             return [self._clean_text(value) for value in
                     self.record.metadata.get_element('.//{0}{1}'.format(ns, elem), delimiter=';')
                     if value]
-        except TypeError:
+        except (AttributeError, TypeError):
             return None
 
     def _clean_text(self, text):
@@ -354,7 +354,7 @@ class DCRecord(XMLRecord):
         try:
             return [re.sub("\( lcsh \)$", '', sub).strip(' ') for sub in
                     self.record.metadata.get_element('.//{0}subject'.format(dc), delimiter=';') if sub]
-        except TypeError:
+        except (AttributeError, TypeError):
             return None
 
     @property
