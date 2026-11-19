@@ -1,8 +1,11 @@
 import datetime
+import http.client
 import logging
 import os
 
+import requests.exceptions
 import sickle
+import urllib3
 from sickle import models
 from sickle.iterator import OAIItemIterator
 from sickle.utils import xml_to_dict
@@ -94,7 +97,27 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
 
             logger.info(f'Writing records {fp.name}')
             fp.write('<oai>')
-            for record in records:
-                fp.write(record.raw)
-                logger.debug(f'Record: {record}')
+
+            try:
+                for record in records:
+                    fp.write(record.raw)
+                    logger.debug(f'Record: {record}')
+
+            except (requests.exceptions.ConnectionError,
+                    urllib3.exceptions.ProtocolError,
+                    http.client.RemoteDisconnected) as e:
+
+                logger.error(
+                    f"Harvest for {org_key}:{set_spec}: "
+                    f"terminated early: {e}"
+                )
+
+                failed_fp = fp.name + ".failed"
+
+                if os.path.exists(fp.name):
+                    os.rename(fp.name, failed_fp)
+
+                logger.error(f"Partial harvest saved as {failed_fp}")
+                raise
+
             fp.write('</oai>')
