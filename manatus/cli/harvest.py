@@ -104,6 +104,7 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
                     logger.debug(f'Record: {record}')
 
             except (requests.exceptions.ConnectionError,
+                    requests.exceptions.HTTPError,
                     urllib3.exceptions.ProtocolError,
                     http.client.RemoteDisconnected) as e:
 
