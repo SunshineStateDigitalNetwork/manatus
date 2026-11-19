@@ -112,7 +112,7 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
                     f"terminated early: {e}"
                 )
 
-                failed_fp = fp.name + ".failed"
+                failed_fp = f"{fp.name}.{datetime.date.today()}.failed"
 
                 if os.path.exists(fp.name):
                     os.rename(fp.name, failed_fp)
