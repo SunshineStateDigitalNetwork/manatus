@@ -2,6 +2,7 @@ import datetime
 import http.client
 import logging
 import os
+import time
 
 import requests.exceptions
 import sickle
@@ -99,14 +100,23 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
             fp.write('<oai>')
 
             try:
-                for record in records:
+                for counter, record in enumerate(records, start=1):
                     fp.write(record.raw)
                     logger.debug(f'Record: {record}')
 
-            except (requests.exceptions.ConnectionError,
+                    if counter % 100 == 0:
+                        logger.info(
+                            f"Processed {counter} records for "
+                            f"{org_key}:{set_spec}; sleeping 1 second"
+                        )
+                        time.sleep(1)
+
+            except (
+                    requests.exceptions.ConnectionError,
                     requests.exceptions.HTTPError,
                     urllib3.exceptions.ProtocolError,
-                    http.client.RemoteDisconnected) as e:
+                    http.client.RemoteDisconnected
+            ) as e:
 
                 logger.error(
                     f"Harvest for {org_key}:{set_spec}: "
