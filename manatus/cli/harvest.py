@@ -104,12 +104,12 @@ def harvest(org_harvest_info, org_key, write_path, verbosity):
                     fp.write(record.raw)
                     logger.debug(f'Record: {record}')
 
-                    if counter % 100 == 0:
+                    if counter % 200 == 0:
                         logger.info(
                             f"Processed {counter} records for "
                             f"{org_key}:{set_spec}; sleeping 1 second"
                         )
-                        time.sleep(1)
+                        time.sleep(2)
 
             except (
                     requests.exceptions.ConnectionError,
