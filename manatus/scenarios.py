@@ -56,7 +56,23 @@ class XMLScenario(Scenario):
         self.records = []
         with open(xml_path, encoding='utf-8') as data_in:
             records = OAIReader(data_in)
+
+            seen = set()
+
             for record in records:
+
+                oid = getattr(record, "oai_urn", None)
+
+                if oid is None:
+                    logger.error(
+                        "OAIReader record has no oai_urn: type=%s repr=%r",
+                        type(record),
+                        record
+                    )
+                elif oid in seen:
+                    logger.error("DUPLICATE OAI RECORD: %s", oid)
+                else:
+                    seen.add(oid)
 
                 # deleted record handling for repox
                 try:
@@ -131,7 +147,19 @@ class MARCXML(XMLScenario):
         """
         logger.debug(f"Loading {xml_path} with {__name__}.MARCXML")
         XMLScenario.__init__(self, xml_path)
+
+        logger.debug(
+            "MARCXML raw record count for %s: %d",
+            xml_path,
+            len(self.records)
+        )
         self.records = [MARCXMLRecord(record) for record in self.records]
+
+        logger.debug(
+            "MARCXML wrapped record count for %s, %d",
+            xml_path,
+            len(self.records)
+        )
 
 
 class BepressDC(SSDNDC):
@@ -730,7 +758,6 @@ class MARCXMLRecord(XMLRecord):
         # Try namespace-qualified record first, then unqualified fallback
         try:
             rec = root.find(f".//{marc}record")
-            print('found record')
             if rec is not None:
                 return rec
         except Exception:

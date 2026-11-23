@@ -116,6 +116,13 @@ def transform(manatus_config, org_transformation_info, org_key, profile, verbosi
             logger.info(f'Loading data {f} with {o.scenario}')
             data = o.scenario(os.path.join(IN_PATH, o.key, f))
 
+            logger.debug(
+                "Scenario %s loaded %d records from %s",
+                o.scenario.__name__,
+                len(data),
+                f
+            )
+
             logger.info(f'Loaded data {f} with {o.scenario}')
             for record in build(custom_map_function, data, o, provider):
                 if to_console:
