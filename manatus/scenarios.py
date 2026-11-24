@@ -675,7 +675,12 @@ class BepressDCRecord(DCRecord):
     @property
     def date(self):
         """dc:date.created"""
-        return re.sub('T[\\d*:]*Z', '', self._value_list('date.created', dc)[0])
+        dates = self._value_list('date.created', dc)
+
+        if not dates:
+            return None
+
+        return re.sub('T[\d:]*Z', '', dates[0])
 
 
 class SSDNMODSRecord(MODSRecord):
